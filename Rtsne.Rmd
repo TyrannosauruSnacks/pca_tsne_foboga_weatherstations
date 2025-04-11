@@ -31,15 +31,15 @@ iris_matrix <- as.matrix(iris_unique[,1:4])
 set.seed(42)
 
 # calculate tsne values
-tsne_foboga_results <- Rtsne(iris_matrix,
+tsne_iris_results <- Rtsne(iris_matrix,
                       pca = FALSE,
                       perplexity = 30,
                       theta = 0.0)
 
 # plot foboga_results
 plot(
-  # take x and Y values from the  tsne_foboga_results list Y data
-  tsne_foboga_results$Y,
+  # take x and Y values from the  tsne_iris_results list Y data
+  tsne_iris_results$Y,
   # color those points by species from original dataframe
   col = iris_unique$Species,
   # even unit lengths for both axis 
@@ -51,10 +51,10 @@ plot(
 
 #### 1.2.1 So it does not run right away
 
-"`tsne_foboga_results` is not a dataframe and cant be coerced by `fortify`."
+"`tsne_iris_results` is not a dataframe and cant be coerced by `fortify`."
 
 ```{r}
-tsne_foboga_results |> 
+tsne_iris_results |> 
   ggplot(aes(x = Y, y = Y, colour = iris_unique$Species)) +
   geom_point()
 ```
@@ -62,13 +62,13 @@ tsne_foboga_results |>
 #### 1.2.2 What does `fortify()` do?
 
 ```{r}
-fortify(tsne_foboga_results)
+fortify(tsne_iris_results)
 ```
 
 #### 1.2.3 cant be coerced `as.data.frame()` either
 
 ```{r}
-as.data.frame(tsne_foboga_results)
+as.data.frame(tsne_iris_results)
 ```
 
 #### 1.2.4 A `list` seems to be something special within R.
@@ -76,14 +76,14 @@ as.data.frame(tsne_foboga_results)
 Parts of the list can be used as a dataframe, by addressing these with `$`
 
 ```{r}
-as.data.frame(tsne_foboga_results$Y)
+as.data.frame(tsne_iris_results$Y)
 ```
 
 #### 1.2.5 Good, so try this with `ggplot()`
 
 ```{r}
 ggplot(
-  as.data.frame(tsne_foboga_results$Y),
+  as.data.frame(tsne_iris_results$Y),
   aes(x = V1, y = V2, color = iris_unique$Species)
   ) +
   geom_point()
@@ -92,12 +92,17 @@ ggplot(
 #### 1.2.6 Clean code a bit
 
 ```{r}
-as.data.frame(tsne_foboga_results$Y) |> 
+as.data.frame(tsne_iris_results$Y) |> 
   ggplot(aes(V1, V2, color = iris_unique$Species)) +
   geom_point()
 ```
 
 ## 2 Foboga data
+Import the `foboga.csv` as `foboga` object.
+Use either the `Import Dataset` -> `from Text (readr)` on top of the `Environment`-Tab, or `File`-> `Import Dataset` -> `from Text (readr)`.
+
+Set columns `Timestamp` as `character` and `Station` as `numeric` respectively.
+
 
 ### 2.1 Basic EDA
 
