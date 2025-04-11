@@ -7,7 +7,7 @@ output: html_document
 
 This runs automatically first in a new session, even If I run another code-chunk.
 ```{r setup, include=FALSE}
-# show results a swell as errors of chunks in export
+# show results as well as errors of chunks in export
 knitr::opts_chunk$set(echo = TRUE, error = TRUE)
 library(tidyverse)
 library(tidymodels)
