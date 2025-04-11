@@ -5,7 +5,9 @@ date: "2025-03-28"
 output: html_document
 ---
 
+This runs automatically first in a new session, even If I run another code-chunk.
 ```{r setup, include=FALSE}
+# show results a swell as errors of chunks in export
 knitr::opts_chunk$set(echo = TRUE, error = TRUE)
 library(tidyverse)
 library(tidymodels)
@@ -14,38 +16,43 @@ library(Rtsne)
 
 ## 1. t-SNE plot with the iris dataset
 
-### 1.1 Let's check the original examples
+### 1.1 Let's check an example
+
+I use the `iris` dataset for that, which ships with the tidyverse package.
 
 ```{r}
-## remove duplicates
+# remove duplicates
 iris_unique <- unique(iris)
 
-## select variable columns into new object
+# select variable columns into new object
 iris_matrix <- as.matrix(iris_unique[,1:4])
 
-## set seed
+# set seed for reproducibility
 set.seed(42)
 
-## calculate tsne values
+# calculate tsne values
 tsne_foboga_results <- Rtsne(iris_matrix,
                       pca = FALSE,
                       perplexity = 30,
                       theta = 0.0)
 
-## plot foboga_results
+# plot foboga_results
 plot(
   # take x and Y values from the  tsne_foboga_results list Y data
   tsne_foboga_results$Y,
   # color those points by species from original dataframe
   col = iris_unique$Species,
-  # make it a square plot
-  asp = 1)
+  # even unit lengths for both axis 
+  asp = 1
+  )
 ```
 
 ### 1.2 Let's try `ggplot`
 
 #### 1.2.1 So it does not run right away
+
 "`tsne_foboga_results` is not a dataframe and cant be coerced by `fortify`."
+
 ```{r}
 tsne_foboga_results |> 
   ggplot(aes(x = Y, y = Y, colour = iris_unique$Species)) +
@@ -53,6 +60,7 @@ tsne_foboga_results |>
 ```
 
 #### 1.2.2 What does `fortify()` do?
+
 ```{r}
 fortify(tsne_foboga_results)
 ```
@@ -62,14 +70,17 @@ fortify(tsne_foboga_results)
 ```{r}
 as.data.frame(tsne_foboga_results)
 ```
+
 #### 1.2.4 A `list` seems to be something special within R.
-Parts of the list can be used as a dataframe, by adressing these with `$`
+
+Parts of the list can be used as a dataframe, by addressing these with `$`
 
 ```{r}
 as.data.frame(tsne_foboga_results$Y)
 ```
 
 #### 1.2.5 Good, so try this with `ggplot()`
+
 ```{r}
 ggplot(
   as.data.frame(tsne_foboga_results$Y),
@@ -79,6 +90,7 @@ ggplot(
 ```
 
 #### 1.2.6 Clean code a bit
+
 ```{r}
 as.data.frame(tsne_foboga_results$Y) |> 
   ggplot(aes(V1, V2, color = iris_unique$Species)) +
@@ -90,24 +102,33 @@ as.data.frame(tsne_foboga_results$Y) |>
 ### 2.1 Basic EDA
 
 #### 2.1.1 Scatterplot and Stats
+
 ```{r}
+# from dataset foboga, plot Soil moisture over Humidity and color points by station
 foboga |>
+  # change column station from numeric to factor (works better for categorical data)
   mutate(Station = as.factor(Station)) |> 
   ggplot(aes(`Humidity (2m)`, `Soil moisture (-0.25m)`)) +
+  # set point's opacity to 75%% to see more from the overlapping points
   geom_point(aes(colour = Station, alpha = 0.25)) +
+  # set a more approachable color palette
   scale_color_brewer(palette = "Set1")
 
+# from dataset foboga for each station,
+# calculate number of entries, mean humidity and mean soil moisture
 foboga |> 
   group_by(Station) |> 
   summarise(n = n(),
             mean_humidity2m = mean(`Humidity (2m)`),
             mean_soil_moisture = mean(`Soil moisture (-0.25m)`))
 ```
-### 2.2 Tidy  data
 
-#### 2.2.1 Convert `Timestamp` and `Station`
-Time comes as `chr` data and is more useful as `num`.
-Station is `num` and is more useful as `factor`.
+### 2.2 Tidy data
+
+#### 2.2.1 Convert columns `Timestamp` and `Station`
+
+Time comes as `chr` data and is more useful as `num`. Station is `num` and is more useful as `factor`.
+
 ```{r}
 foboga_tidy <- foboga |>
     mutate(Timestamp = ymd_hms(Timestamp),
@@ -116,20 +137,26 @@ foboga_tidy <- foboga |>
 ```
 
 #### 2.2.1 Humidity-Curve over time per Station
+
 ```{r}
+# from dataset foboga_tidy
 foboga_tidy |> 
+  # plot "Humidity (2m)" over Timestamp and color by "Station"
   ggplot(aes(Timestamp, `Humidity (2m)`, color = Station)) +
-  geom_smooth(method = "lm", se = FALSE) +
+  # fit an plot an linear model, show confidence interval 0.95
+  geom_smooth(method = "lm", se = TRUE) +
   scale_color_brewer(palette = "Set1")
 ```
 
 ### 2.3 What does Rtsne do?
 
 #### 2.3.1 Select and Filter
-Rtsne wants only unique/distinc rows and I also want the `Station` column to not be considered as this is the category for later exploration.
+
+Rtsne wants only unique/distinc rows and I also want the `Station` column to not be considered, as this is the category for later exploration.
 
 ```{r}
 foboga_data <- foboga_tidy |>
+  # filter unique entries
   distinct() |>
   # select all columns from Timestamp till Soil moisture
   select(`Timestamp` : `Soil moisture (-0.55m)`)
@@ -140,19 +167,41 @@ foboga_station <- foboga_tidy |>
 ```
 
 #### 2.3.2 Calculate Rtsne data
+
 ```{r}
-## set seed for later reproduction
+## set seed for reproducibility
 set.seed(42)
 
-## calculate and safe Rtsne data
+## calculate and safe rtsne data as objects
+## Perplexity 50
+foboga_Rtsne_perp50_the50 <- Rtsne(foboga_data,
+                      perplexity = 50,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 100
+foboga_Rtsne_perp100_the50 <- Rtsne(foboga_data,
+                      perplexity = 100,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 200
+foboga_Rtsne_perp200_the50 <- Rtsne(foboga_data,
+                      perplexity = 200,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 1000
 foboga_Rtsne_perp1000_the50 <- Rtsne(foboga_data,
                       perplexity = 1000,
                       theta = 0.5,
                       check_duplicates = FALSE,
                       num_threads = 0)
+
 ```
 
 #### 2.3.3 Plot
+
 ```{r}
 ## Perplexity 50
 as.data.frame(foboga_Rtsne_perp50_the50$Y) |> 
@@ -178,20 +227,40 @@ as.data.frame(foboga_Rtsne_perp1000_the50$Y) |>
   geom_point(aes(alpha = 0.25)) +
   scale_color_brewer(palette = "Set1")
 ```
-#### 2.3.4 Select some more
-So with the `Timestamp` we can only see, that there are different clusters over time.
-So the timestamp explains the most variabiliy. Loose it and see better how the other variables interact.
+
+#### 2.3.4 Tidy some more
+
+So with the `Timestamp` consideres we can only see, that there are different clusters over time. So the timestamp explains the most variability. Loose it and see how the other variables interact better.
+
 ```{r}
 foboga_select <- foboga_data |> 
   select(`Temperature (2m)` : `Soil moisture (-0.55m)`)
 
 ```
-#### 2.3.5 Calculate some more
-```{r}
-## set seed for later reproduction
-set.seed(42)
 
-## calculate and safe Rtsne data
+#### 2.3.5 Calculate some more
+
+```{r}
+## calculate and safe Rtsne data as objects
+## Perplexity 50
+foboga_select_Rtsne_perp50_the50 <- Rtsne(foboga_select,
+                      perplexity = 50,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 100
+foboga_select_Rtsne_perp100_the50 <- Rtsne(foboga_select,
+                      perplexity = 100,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 200
+foboga_select_Rtsne_perp200_the50 <- Rtsne(foboga_select,
+                      perplexity = 200,
+                      theta = 0.5,
+                      check_duplicates = FALSE,
+                      num_threads = 0)
+## Perplexity 1000
 foboga_select_Rtsne_perp1000_the50 <- Rtsne(foboga_select,
                       perplexity = 1000,
                       theta = 0.5,
@@ -200,6 +269,7 @@ foboga_select_Rtsne_perp1000_the50 <- Rtsne(foboga_select,
 ```
 
 #### 2.3.6 Plot some more
+
 ```{r}
 ## Perplexity 50
 as.data.frame(foboga_select_Rtsne_perp50_the50$Y) |> 
@@ -228,16 +298,19 @@ as.data.frame(foboga_select_Rtsne_perp1000_the50$Y) |>
 
 ### 2.4 PCA
 
+[R Studio PCA Tutorial ](https://www.statology.org/principal-components-analysis-in-r/)
+
 #### 2.4.1 Calculate Principal Components
+
 ```{r}
 # calculate principal components
 foboga_results <- prcomp(foboga_select, scale. = TRUE)
 
 # reverse the signs
-## don't know why
+## don't know why 
 foboga_results$rotation <- -1*foboga_results$rotation
 
-# display principal components
+# display composition of principal components
 foboga_results$rotation
 
 ```
@@ -249,11 +322,12 @@ foboga_results$rotation
 ## still dont know why
 foboga_results$x <- -1*foboga_results$x
 
-# check scores
+# check scores for the first few rows
 head(foboga_results$x)
 ```
 
 #### 2.4.3 Plot
+
 [Biplot with GGplot](https://www.geeksforgeeks.org/how-to-create-a-biplot-in-r/)
 
 ```{r}
