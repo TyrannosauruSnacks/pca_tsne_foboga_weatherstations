@@ -1,11 +1,9 @@
 ---
 title: "tSNE"
-author: "Max Hachemeister"
-date: "2025-03-28"
 output: html_document
 ---
 
-This runs automatically first in a new session, even If I run another code-chunk.
+This is set to run automatically first in a new session, even If I ran another code-chunk.
 ```{r setup, include=FALSE}
 # show results as well as errors of chunks in export
 knitr::opts_chunk$set(echo = TRUE, error = TRUE)
@@ -98,11 +96,11 @@ as.data.frame(tsne_iris_results$Y) |>
 ```
 
 ## 2 Foboga data
+
 Import the `foboga.csv` as `foboga` object.
 Use either the `Import Dataset` -> `from Text (readr)` on top of the `Environment`-Tab, or `File`-> `Import Dataset` -> `from Text (readr)`.
 
 Set columns `Timestamp` as `character` and `Station` as `numeric` respectively.
-
 
 ### 2.1 Basic EDA
 
@@ -204,6 +202,8 @@ foboga_Rtsne_perp1000_the50 <- Rtsne(foboga_data,
                       num_threads = 0)
 
 ```
+
+Yeah, This could be solved with a function. But I haven't gone down that road, yet.
 
 #### 2.3.3 Plot
 
