@@ -1,4 +1,4 @@
-# PCA_tSNE_foboga_weatherstations
+# pca_tsne_foboga_weatherstations
 Exploratory Data Analysis by reducing dimensionality with Principal Component Analysis and t-distributed Stochastic Neighbour Embedding
 
 Download the files and open the `.rmd` in R-Studio. There you will find my explanations.
